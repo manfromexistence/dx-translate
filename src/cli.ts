@@ -1,10 +1,9 @@
 import { intro, outro, select, text, spinner, isCancel } from '@/prompts';
 import { MyMemoryTranslator } from '@/translators/mymemory';
-// import { GoogleTranslator } from '@/translators/google';
-import { MYMEMORY_LANGUAGES_TO_CODES } from "@/utils/languages";
 import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
+import { MYMEMORY_LANGUAGES_TO_CODES } from "@/utils/languages";
 
 async function runTryMode() {
   const textToTranslate = await text({
@@ -24,7 +23,7 @@ async function runTryMode() {
   const defaultTargetLang = 'arabic';
 
   const targetLang = await text({
-    message: 'Enter the target language (e.g., "es", "german"):',
+    message: 'Enter the target language (e.g., "spanish", "german"):',
     initialValue: defaultTargetLang,
   });
 
@@ -75,7 +74,7 @@ async function runGenerateMode() {
     
     s.stop('File read successfully.');
 
-    // Removed the language input prompt. We will now always translate to all languages.
+    // Automatically translate to all languages from the Map.
     const targetLanguages: string[] = Array.from(MYMEMORY_LANGUAGES_TO_CODES.keys());
     
     const originalKeys = Object.keys(jsonContent);
@@ -85,49 +84,47 @@ async function runGenerateMode() {
 
     s.start(`Preparing to translate into ${totalLanguages} languages.`);
     
-    // Iterate over each selected language and perform translation
     for (let i = 0; i < totalLanguages; i++) {
         const langName = targetLanguages[i];
-        const langCode = MYMEMORY_LANGUAGES_TO_CODES.get(langName)!;
 
-        // Update spinner to show current progress
         s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
 
         try {
+            // CORRECTED: Use the full language name (e.g., "spanish") for the target.
             const translator = new MyMemoryTranslator({
                 source: 'english',
-                target: langCode,
-                email: 'manfromexistence1@gmail.com', // Using an email is recommended
+                target: langName, 
+                email: 'manfromexistence1@gmail.com',
             });
 
             const translatedText = await translator.translate(textToTranslate);
             
-            // Use regex to extract translated values from the response string
             const translatedValues = translatedText.match(/\((.*?)\)/g)?.map(v => v.slice(1, -1)) || [];
             
             if (originalKeys.length !== translatedValues.length) {
                 console.warn(`\n[Warning] Mismatch for ${langName}. Expected ${originalKeys.length} translations, but got ${translatedValues.length}. Skipping.`);
-                continue; // Skip this language and proceed with the next one
+                continue;
             }
 
             const newJsonContent = Object.fromEntries(
                 originalKeys.map((key, index) => [key, translatedValues[index]])
             );
 
+            // Use the language code (e.g., "es-ES") for the filename for consistency.
+            const langCode = MYMEMORY_LANGUAGES_TO_CODES.get(langName)!;
             const localesDir = path.resolve(process.cwd(), 'locales');
-            const targetFilePath = path.join(localesDir, `${langName.replace(/\s/g, '-')}.json`);
+            const targetFilePath = path.join(localesDir, `${langCode}.json`);
             
             await fs.mkdir(localesDir, { recursive: true });
 
             let finalJsonToWrite = newJsonContent;
 
-            // Check if a file for the language already exists to update it
             try {
                 const existingContent = await fs.readFile(targetFilePath, 'utf-8');
                 const existingJson = JSON.parse(existingContent);
                 finalJsonToWrite = { ...existingJson, ...newJsonContent };
             } catch (err) {
-                // If the file doesn't exist or is unreadable, a new one will be created.
+                // If the file doesn't exist, a new one will be created.
             }
             
             await fs.writeFile(targetFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
