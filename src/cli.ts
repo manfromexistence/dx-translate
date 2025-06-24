@@ -1,7 +1,6 @@
-import { intro, outro, select, text, confirm, spinner } from '@clack/prompts';
-import { GoogleTranslator } from '@/translators/google';
+import { intro, outro, select, text, spinner, isCancel } from '@clack/prompts';
 import { MyMemoryTranslator } from '@/translators/mymemory';
-import { isCancel } from '@clack/prompts';
+import { GoogleTranslator } from '@/translators/google';
 import cfonts from "cfonts";
 
 async function main() {

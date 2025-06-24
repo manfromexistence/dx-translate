@@ -50,7 +50,7 @@
     "test": "FORCE_COLOR=1 vitest run"
   },
   "dependencies": {
-    "@clack/core": "workspace:*",
+    "@clack/core": "1.0.0-alpha.1",
     "picocolors": "^1.0.0",
     "sisteransi": "^1.0.5"
   },
