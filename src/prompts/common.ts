@@ -13,7 +13,7 @@ export const S_STEP_ACTIVE = unicodeOr('♦', '*');
 // export const S_STEP_ACTIVE = unicodeOr('♣', '*');
 export const S_STEP_CANCEL = unicodeOr('■', 'x');
 export const S_STEP_ERROR = unicodeOr('▲', 'x');
-export const S_STEP_SUBMIT = unicodeOr('◇', 'o');
+export const S_STEP_SUBMIT = unicodeOr('▼', 'o');
 
 export const S_BAR_START = unicodeOr('┌', 'T');
 export const S_BAR = unicodeOr('│', '|');
