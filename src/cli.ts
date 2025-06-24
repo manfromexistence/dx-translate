@@ -1,15 +1,15 @@
 import { intro, outro, select, text, spinner, isCancel } from '@/prompts';
-import { MyMemoryTranslator } from '@/translators/mymemory';
+// import { MyMemoryTranslator } from '@/translators/mymemory'; // MyMemory translator is commented out
 import { GoogleTranslator } from '@/translators/google';
 import { GOOGLE_LANGUAGES_TO_CODES, MYMEMORY_LANGUAGES_TO_CODES } from "@/utils/languages";
 import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
 
-async function runTryMode(provider: 'Google' | 'MyMemory') {
+async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
   const textToTranslate = await text({
     message: 'Enter the text you want to translate:',
-    initialValue: `(Hello World)`,
+    initialValue: `Hello World!`,
     validate: (input) => {
       if (!input) return 'Please enter some text.';
     },
@@ -50,7 +50,13 @@ async function runTryMode(provider: 'Google' | 'MyMemory') {
 
       const googleTranslator = new GoogleTranslator(sourceCode, targetCode);
       translatedText = await googleTranslator.translate(textToTranslate as string);
-    } else {
+
+      s.stop('Translation complete!');
+      outro(`${translatedText}`);
+    } 
+    /*
+    // MyMemory provider logic is commented out
+    else {
       const myMemoryTranslator = new MyMemoryTranslator({
         source: sourceLang as string,
         target: targetLang as string,
@@ -58,9 +64,7 @@ async function runTryMode(provider: 'Google' | 'MyMemory') {
       });
       translatedText = await myMemoryTranslator.translate(textToTranslate as string);
     }
-
-    s.stop('Translation complete!');
-    outro(`${translatedText}`);
+    */
 
   } catch (error) {
     s.stop('An error occurred.');
@@ -69,7 +73,7 @@ async function runTryMode(provider: 'Google' | 'MyMemory') {
 }
 
 // FIX APPLIED IN THIS FUNCTION
-async function runGenerateMode(provider: 'Google' | 'MyMemory') {
+async function runGenerateMode(provider: 'Google' /*| 'MyMemory'*/) {
   const filePathInput = await text({
     message: 'Enter the path to the source JSON file:',
     initialValue: './locales-google/en.json',
@@ -90,7 +94,8 @@ async function runGenerateMode(provider: 'Google' | 'MyMemory') {
 
     s.stop('File read successfully.');
 
-    const languageMap = provider === 'Google' ? GOOGLE_LANGUAGES_TO_CODES : MYMEMORY_LANGUAGES_TO_CODES;
+    // Defaulting to Google's language map as MyMemory is commented out
+    const languageMap = GOOGLE_LANGUAGES_TO_CODES;
     const targetLanguages: string[] = Array.from(languageMap.keys());
 
     const originalKeys = Object.keys(jsonContent);
@@ -106,19 +111,22 @@ async function runGenerateMode(provider: 'Google' | 'MyMemory') {
       s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
 
       try {
-        let translator;
+        let translator:any;
 
         if (provider === 'Google') {
           const sourceCode = GOOGLE_LANGUAGES_TO_CODES.get('english')!;
           const targetCode = GOOGLE_LANGUAGES_TO_CODES.get(langName)!;
           translator = new GoogleTranslator(sourceCode, targetCode);
-        } else { // MyMemory
+        } 
+        /* // MyMemory provider logic is commented out
+        else { // MyMemory
           translator = new MyMemoryTranslator({
             source: 'english',
             target: langName,
             email: 'manfromexistence1@gmail.com',
           });
         }
+        */
 
         // Create an array of translation promises, one for each value
         const translationPromises = originalValues.map(value =>
@@ -191,7 +199,10 @@ async function main() {
   });
 
   intro('Welcome to the Translation CLI');
-
+  
+  // Provider is now defaulted to Google. The selection prompt is commented out.
+  const provider = 'Google';
+  /*
   const provider = await select({
     message: 'Select a translation provider:',
     options: [
@@ -204,6 +215,7 @@ async function main() {
     outro('Operation cancelled.');
     return;
   }
+  */
 
   const mode = await select({
     message: 'What would you like to do?',
@@ -219,9 +231,9 @@ async function main() {
   }
 
   if (mode === 'Generate') {
-    await runGenerateMode(provider as 'Google' | 'MyMemory');
+    await runGenerateMode(provider as 'Google' /*| 'MyMemory'*/);
   } else if (mode === 'Try') {
-    await runTryMode(provider as 'Google' | 'MyMemory');
+    await runTryMode(provider as 'Google' /*| 'MyMemory'*/);
   }
 }
 
