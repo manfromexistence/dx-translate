@@ -2,29 +2,25 @@ import { intro, outro, select, text, confirm, spinner } from '@clack/prompts';
 import { GoogleTranslator } from '@/translators/google';
 import { MyMemoryTranslator } from '@/translators/mymemory';
 import { isCancel } from '@clack/prompts';
-import figlet from 'figlet';
 import cfonts from "cfonts";
 
 async function main() {
   console.clear();
-  // const title = figlet.textSync('Dx Translate');
-  const title:any = cfonts.say('Dx Translate', {
+  
+  // cfonts.say will print the title directly to the console.
+  cfonts.say('Dx Translate', {
     font: 'block',              // define the font face
     align: 'left',              // define text alignment
-    colors: ['system'],         // define all colors
-    background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
+    background: 'transparent',  // define the background color
     letterSpacing: 1,           // define letter spacing
     lineHeight: 1,              // define the line height
     space: true,                // define if the output text should have empty lines on top and on the bottom
     maxLength: '0',             // define how many character can be on one line
-    gradient: false,            // define your two gradient colors
-    independentGradient: false, // define if you want to recalculate the gradient for each new line
+    gradient: ['cyan', 'blue'], // define your two gradient colors
+    independentGradient: true,  // define if you want to recalculate the gradient for each new line
     transitionGradient: false,  // define if this is a transition between colors directly
-    rawMode: false,             // define if the line breaks should be CRLF (`\r\n`) over the default LF (`\n`)
     env: 'node'                 // define the environment cfonts is being executed in
   });
-
-  intro(title);
 
   const provider = await select({
     message: 'Which translation provider would you like to use?',
@@ -96,7 +92,6 @@ async function main() {
     }
     s.stop('Translation complete!');
 
-    // outro(`Original Text: ${textToTranslate}\nTranslation:    ${translatedText}`);
     outro(`${translatedText}`);
 
   } catch (error) {
