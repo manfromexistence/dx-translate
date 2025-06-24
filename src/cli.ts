@@ -6,6 +6,7 @@ import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
 
+// runTryMode remains the same, no changes needed here.
 async function runTryMode(provider: 'Google' | 'MyMemory') {
   const textToTranslate = await text({
     message: 'Enter the text you want to translate:',
@@ -68,6 +69,7 @@ async function runTryMode(provider: 'Google' | 'MyMemory') {
   }
 }
 
+// FIX APPLIED IN THIS FUNCTION
 async function runGenerateMode(provider: 'Google' | 'MyMemory') {
   const filePathInput = await text({
     message: 'Enter the path to the source JSON file:',
@@ -94,7 +96,6 @@ async function runGenerateMode(provider: 'Google' | 'MyMemory') {
 
     const originalKeys = Object.keys(jsonContent);
     const originalValues = Object.values(jsonContent);
-    const textToTranslate = originalValues.map(value => `(${value})`).join('');
     const totalLanguages = targetLanguages.length;
 
     s.start(`Preparing to translate into ${totalLanguages} languages using ${provider}.`);
@@ -120,14 +121,15 @@ async function runGenerateMode(provider: 'Google' | 'MyMemory') {
           });
         }
 
-        const translatedText = await translator.translate(textToTranslate);
+        // Create an array of translation promises, one for each value
+        const translationPromises = originalValues.map(value =>
+          translator.translate(String(value))
+        );
 
-        const translatedValues = translatedText.match(/\((.*?)\)/g)?.map(v => v.slice(1, -1)) || [];
+        // Await all promises to resolve concurrently
+        const translatedValues = await Promise.all(translationPromises);
 
-        if (originalKeys.length !== translatedValues.length) {
-          console.warn(`\n[Warning] Mismatch for ${langName}. Expected ${originalKeys.length} translations, but got ${translatedValues.length}. Skipping.`);
-          continue;
-        }
+        // The mismatch check is no longer needed because Promise.all guarantees order and length.
 
         const newJsonContent = Object.fromEntries(
           originalKeys.map((key, index) => [key, translatedValues[index]])
@@ -171,6 +173,7 @@ async function runGenerateMode(provider: 'Google' | 'MyMemory') {
   }
 }
 
+// main function remains the same, no changes needed here.
 async function main() {
   console.clear();
 
