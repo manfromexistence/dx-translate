@@ -29,12 +29,15 @@
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "axios": "^1.10.0",
+    "cfonts": "^3.3.0",
+    "figlet": "^1.8.1",
     "inquirer": "^12.6.3",
     "puppeteer": "^24.10.2"
   },
   "devDependencies": {
+    "@types/figlet": "^1.7.0",
     "@types/node": "^20.4.1",
-    "typescript": "^5.1.6",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "typescript": "^5.1.6"
   }
 }
