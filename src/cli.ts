@@ -61,9 +61,12 @@ async function main() {
     sourceLang = myMemorySourceLang;
   }
 
+  // Set the default target language based on the selected provider.
+  const defaultTargetLang = provider === 'Google' ? 'ar' : 'arabic';
+
   const targetLang = await text({
     message: 'Enter the target language (e.g., "es", "german"):',
-    initialValue: 'arabic',
+    initialValue: defaultTargetLang,
   });
 
 
