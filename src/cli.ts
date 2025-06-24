@@ -80,22 +80,66 @@ async function runGenerateMode() {
   }
 
   const s = spinner();
-  s.start(`Reading file: ${filePathInput}`);
+  s.start(`Reading source file: ${filePathInput}`);
 
   try {
     const absolutePath = path.resolve(process.cwd(), filePathInput as string);
     const fileContent = await fs.readFile(absolutePath, 'utf-8');
     const jsonContent = JSON.parse(fileContent);
 
-    s.stop('File read successfully.');
+    s.message('Formatting content for translation...');
+    const originalKeys = Object.keys(jsonContent);
+    const originalValues = Object.values(jsonContent);
+    const textToTranslate = originalValues.map(value => `(${value})`).join('');
 
-    console.log('\n--- Values from File ---');
-    const values = Object.values(jsonContent);
-    const formattedKeys = values.map(value => `(${value})`).join('');
-    console.log(formattedKeys);
-    console.log('--------------------------\n');
+    s.message('Translating to Arabic...');
+    const myMemoryTranslator = new MyMemoryTranslator({
+      source: 'english',
+      target: 'arabic',
+      email: "manfromexistence1@gmail.com", // Optional but recommended
+    });
+    const translatedText = await myMemoryTranslator.translate(textToTranslate);
 
-    outro('File processing complete.');
+    s.message('Parsing translated content...');
+    // Regex to find content inside parentheses: (content)
+    const translatedValues = translatedText.match(/\((.*?)\)/g)?.map(v => v.slice(1, -1)) || [];
+
+    if (originalKeys.length !== translatedValues.length) {
+        throw new Error(`Translation mismatch: Expected ${originalKeys.length} values, but got ${translatedValues.length}.`);
+    }
+
+    const arabicJsonContent = Object.fromEntries(
+      originalKeys.map((key, index) => [key, translatedValues[index]])
+    );
+
+    s.message('Saving to locales/arabic.json...');
+    const localesDir = path.resolve(process.cwd(), 'locales');
+    const arabicFilePath = path.join(localesDir, 'arabic.json');
+
+    // Ensure the 'locales' directory exists
+    await fs.mkdir(localesDir, { recursive: true });
+
+    let finalJsonToWrite = arabicJsonContent;
+
+    try {
+        // Check if the file already exists to update it
+        const existingArabicFile = await fs.readFile(arabicFilePath, 'utf-8');
+        const existingArabicJson = JSON.parse(existingArabicFile);
+        s.message('Updating existing arabic.json...');
+        // Merge new translations into the existing file
+        finalJsonToWrite = { ...existingArabicJson, ...arabicJsonContent };
+    } catch (error) {
+        // If file doesn't exist (ENOENT) or is invalid JSON, we'll just create a new one.
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT' && !(error instanceof SyntaxError)) {
+            throw error; // Re-throw other errors
+        }
+        s.message('Creating new arabic.json...');
+    }
+
+    await fs.writeFile(arabicFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
+
+    s.stop('Successfully generated and saved locales/arabic.json');
+    outro('File generation complete.');
 
   } catch (error) {
     s.stop('An error occurred.');
