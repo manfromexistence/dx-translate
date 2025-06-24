@@ -134,7 +134,7 @@ async function runGenerateMode(provider: 'Google' | 'MyMemory') {
         );
 
         const langCode = languageMap.get(langName)!;
-        const localesDir = path.resolve(process.cwd(), 'locales');
+        const localesDir = path.resolve(process.cwd(), 'locales-google');
         const targetFilePath = path.join(localesDir, `${langCode}.json`);
 
         await fs.mkdir(localesDir, { recursive: true });
