@@ -9,7 +9,7 @@ import axios from 'axios';
 async function runTTSMode(): Promise<boolean> {
   const textToSpeak = await text({
     message: 'Enter the text to convert to speech (or press ESC to cancel):',
-    initialValue: `Hello World!`,
+    initialValue: `আমরা এখনও বিটাতে রয়েছি`,
     validate: (input) => {
       if (!input) return 'Please enter some text.';
     },
