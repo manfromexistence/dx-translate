@@ -16,20 +16,19 @@ async function runTTSMode(): Promise<boolean> {
   });
 
   if (isCancel(textToSpeak)) {
-    return false; // Signal to exit the loop
+    return false;
   }
 
   const s = spinner();
   s.start('Detecting language and generating audio...');
 
   try {
-    // --- Language Detection Step ---
     const detectUrl = "https://translate.google.com/translate_a/single";
     const { data: detectData } = await axios.get(detectUrl, {
       params: {
         client: "gtx",
         sl: "auto",
-        tl: "en", // Target language doesn't matter for detection
+        tl: "en",
         dt: "t",
         q: textToSpeak,
       },
@@ -44,9 +43,8 @@ async function runTTSMode(): Promise<boolean> {
     if (!detectedLangCode || typeof detectedLangCode !== 'string') {
       s.stop('Language Detection Failed.', 1);
       console.error('\nCould not automatically detect the language. Please try again.');
-      return true; // Continue the loop
+      return true;
     }
-    // --- End Language Detection ---
 
     const googleTranslator = new GoogleTranslator("auto", detectedLangCode);
     const audioBuffer = await googleTranslator.getTTS(textToSpeak as string, detectedLangCode);
@@ -61,7 +59,7 @@ async function runTTSMode(): Promise<boolean> {
     s.stop('An error occurred.');
     console.error((error as Error).message);
   }
-  return true; // Signal to continue the loop
+  return true;
 }
 
 async function main() {

@@ -6,7 +6,6 @@ import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
 
-// MODIFICATION: This function now performs a single translation and returns.
 async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
   const textToTranslate = await text({
     message: 'Enter the text to translate (or press ESC to cancel):',
@@ -16,14 +15,13 @@ async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
     },
   });
 
-  // If the user cancels, return to the main menu.
   if (isCancel(textToTranslate)) {
     outro('Operation cancelled.');
     return;
   }
 
   const sourceLang = 'english';
-  const defaultTargetLang = 'arabic';
+  const defaultTargetLang = 'french';
 
   const targetLang = await text({
     message: 'Enter the target language (e.g., "spanish", "german"):',
@@ -31,7 +29,6 @@ async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
   });
 
 
-  // If the user cancels, return to the main menu.
   if (isCancel(targetLang)) {
     outro('Operation cancelled.');
     return;
@@ -77,7 +74,6 @@ async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
   }
 }
 
-// NO CHANGES IN THIS FUNCTION
 async function runGenerateMode(provider: 'Google' /*| 'MyMemory'*/) {
   const filePathInput = await text({
     message: 'Enter the path to the source JSON file:',
@@ -99,7 +95,6 @@ async function runGenerateMode(provider: 'Google' /*| 'MyMemory'*/) {
 
     s.stop('File read successfully.');
 
-    // Defaulting to Google's language map as MyMemory is commented out
     const languageMap = GOOGLE_LANGUAGES_TO_CODES;
     const targetLanguages: string[] = Array.from(languageMap.keys());
 
@@ -111,7 +106,7 @@ async function runGenerateMode(provider: 'Google' /*| 'MyMemory'*/) {
 
     for (let i = 0; i < totalLanguages; i++) {
       const langName = targetLanguages[i];
-      if (langName === 'english') continue; // Skip translating to the source language
+      if (langName === 'english') continue;
 
       s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
 
@@ -133,15 +128,11 @@ async function runGenerateMode(provider: 'Google' /*| 'MyMemory'*/) {
         }
         */
 
-        // Create an array of translation promises, one for each value
         const translationPromises = originalValues.map(value =>
           translator.translate(String(value))
         );
 
-        // Await all promises to resolve concurrently
         const translatedValues = await Promise.all(translationPromises);
-
-        // The mismatch check is no longer needed because Promise.all guarantees order and length.
 
         const newJsonContent = Object.fromEntries(
           originalKeys.map((key, index) => [key, translatedValues[index]])
@@ -185,7 +176,6 @@ async function runGenerateMode(provider: 'Google' /*| 'MyMemory'*/) {
   }
 }
 
-// MODIFICATION: The main function now loops the mode selection.
 async function main() {
   console.clear();
 
@@ -206,7 +196,6 @@ async function main() {
   intro('Welcome to the Translation CLI');
 
   while (true) {
-    // Provider is now defaulted to Google. The selection prompt is commented out.
     const provider = 'Google';
     /*
     const provider = await select({
