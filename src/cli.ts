@@ -2,8 +2,8 @@ import { intro, outro, select, text, spinner, isCancel } from '@/prompts';
 import { MyMemoryTranslator } from '@/translators/mymemory';
 // import { GoogleTranslator } from '@/translators/google';
 import cfonts from "cfonts";
-import fs from 'fs/promises'; // For reading files
-import path from 'path';     // For handling file paths
+import fs from 'fs/promises';
+import path from 'path';
 
 async function runTryMode() {
   const textToTranslate = await text({
@@ -19,7 +19,6 @@ async function runTryMode() {
     return;
   }
 
-  // Source language is now hardcoded to English
   const sourceLang = 'english';
   /*
   const myMemorySourceLang = await text({
@@ -33,7 +32,6 @@ async function runTryMode() {
   sourceLang = myMemorySourceLang;
   */
 
-  // Set the default target language for MyMemory
   const defaultTargetLang = 'arabic';
 
   const targetLang = await text({
