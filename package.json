@@ -35,9 +35,11 @@
     "puppeteer": "^24.10.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.0.5",
     "@types/figlet": "^1.7.0",
     "@types/node": "^20.4.1",
     "bun-types": "latest",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "ultracite": "^5.0.12"
   }
 }
