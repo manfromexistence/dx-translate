@@ -7,6 +7,7 @@ export const unicode = isUnicodeSupported();
 export const isCI = (): boolean => process.env.CI === 'true';
 export const unicodeOr = (c: string, fallback: string) => (unicode ? c : fallback);
 export const S_STEP_ACTIVE = unicodeOr('♦', '*');
+// export const S_STEP_ACTIVE = unicodeOr('▼', '*');
 // export const S_STEP_ACTIVE = unicodeOr('♣', '*');
 // export const S_STEP_ACTIVE = unicodeOr('♥', '*');
 // export const S_STEP_ACTIVE = unicodeOr('♣', '*');
