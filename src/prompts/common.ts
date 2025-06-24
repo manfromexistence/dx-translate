@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'node:stream';
-import type { State } from '@clack/core';
+import type { State } from '@/core';
 import isUnicodeSupported from 'is-unicode-supported';
 import color from 'picocolors';
 

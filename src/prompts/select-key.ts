@@ -1,4 +1,4 @@
-import { SelectKeyPrompt } from '@clack/core';
+import { SelectKeyPrompt } from '@/core';
 import color from 'picocolors';
 import { S_BAR, S_BAR_END, symbol } from './common.js';
 import type { Option, SelectOptions } from './select.js';

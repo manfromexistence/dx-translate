@@ -1,4 +1,4 @@
-import { GroupMultiSelectPrompt } from '@clack/core';
+import { GroupMultiSelectPrompt } from '@/core';
 import color from 'picocolors';
 import {
 	type CommonOptions,

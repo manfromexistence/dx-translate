@@ -12,4 +12,3 @@ export { default as TextPrompt } from './prompts/text.js';
 export { default as AutocompletePrompt } from './prompts/autocomplete.js';
 export { block, isCancel, getColumns } from './utils/index.js';
 export { updateSettings, settings } from './utils/settings.js';
-

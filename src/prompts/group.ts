@@ -1,4 +1,4 @@
-import { isCancel } from '@clack/core';
+import { isCancel } from '@/core';
 
 type Prettify<T> = {
 	[P in keyof T]: T[P];

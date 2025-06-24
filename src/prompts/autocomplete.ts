@@ -1,4 +1,4 @@
-import { AutocompletePrompt } from '@clack/core';
+import { AutocompletePrompt } from '@/core';
 import color from 'picocolors';
 import {
 	type CommonOptions,

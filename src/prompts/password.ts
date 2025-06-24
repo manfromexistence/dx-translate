@@ -1,4 +1,4 @@
-import { PasswordPrompt } from '@clack/core';
+import { PasswordPrompt } from '@/core';
 import color from 'picocolors';
 import { type CommonOptions, S_BAR, S_BAR_END, S_PASSWORD_MASK, symbol } from './common.js';
 

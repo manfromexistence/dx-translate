@@ -1,5 +1,5 @@
 import type { Writable } from 'node:stream';
-import { getColumns } from '@clack/core';
+import { getColumns } from '@/core';
 import color from 'picocolors';
 import { erase } from 'sisteransi';
 import { type CommonOptions, S_BAR, S_STEP_SUBMIT, isCI as isCIFn } from './common.js';

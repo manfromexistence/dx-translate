@@ -1,4 +1,4 @@
-import { SelectPrompt } from '@clack/core';
+import { SelectPrompt } from '@/core';
 import color from 'picocolors';
 import {
 	type CommonOptions,

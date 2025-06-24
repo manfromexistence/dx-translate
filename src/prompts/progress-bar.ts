@@ -1,4 +1,4 @@
-import type { State } from '@clack/core';
+import type { State } from '@/core';
 import color from 'picocolors';
 import { unicodeOr } from './common.js';
 import { type SpinnerOptions, type SpinnerResult, spinner } from './spinner.js';

@@ -1,4 +1,4 @@
-import { block, settings } from '@clack/core';
+import { block, settings } from '@/core';
 import color from 'picocolors';
 import { cursor, erase } from 'sisteransi';
 import {

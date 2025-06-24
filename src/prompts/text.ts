@@ -1,4 +1,4 @@
-import { TextPrompt } from '@clack/core';
+import { TextPrompt } from '@/core';
 import color from 'picocolors';
 import { type CommonOptions, S_BAR, S_BAR_END, symbol } from './common.js';
 
