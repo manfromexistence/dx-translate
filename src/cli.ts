@@ -1,6 +1,7 @@
 import { intro, outro, select, text, spinner, isCancel } from '@/prompts';
 import { MyMemoryTranslator } from '@/translators/mymemory';
 // import { GoogleTranslator } from '@/translators/google';
+import { MYMEMORY_LANGUAGES_TO_CODES } from "@/utils/languages";
 import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
@@ -8,7 +9,7 @@ import path from 'path';
 async function runTryMode() {
   const textToTranslate = await text({
     message: 'Enter the text you want to translate:',
-    initialValue: `(Friday)(What you want me to build)(Ask me anything...)(Search)(Search for joy)(Search Languages)(Start New)(Home)(Automations)(Varients)(Library)(Projects)(Spaces)(More)(Info)(We are still in beta so we can make mistakes.)(Please sign in to view your chat history.)(Sign Up)(Enter your details to create an account.)(Create Account)(Or continue with)(Already have an account?)(Sign In)(Enter your login details.)(Forgot password?)(Remember me)(Don't have an account?)(First name)(Last name)(Email)(Password)(Confirm Password)(Confirm your password)(Profile Image)(Profile preview)(Sign up successful!)(Upload failed.)(Settings)(Pricing)(Documentation)(Community)(Preferences)(Theme)(Language)(Sign Out)`,
+    initialValue: `(Hello World)`,
     validate: (input) => {
       if (!input) return 'Please enter some text.';
     },
@@ -20,18 +21,6 @@ async function runTryMode() {
   }
 
   const sourceLang = 'english';
-  /*
-  const myMemorySourceLang = await text({
-    message: 'Enter the source language (e.g., "en", "english"):',
-    initialValue: 'english'
-  });
-  if (isCancel(myMemorySourceLang)) {
-    outro('Operation cancelled.');
-    return;
-  }
-  sourceLang = myMemorySourceLang;
-  */
-
   const defaultTargetLang = 'arabic';
 
   const targetLang = await text({
@@ -49,17 +38,14 @@ async function runTryMode() {
   s.start('Translating...');
 
   try {
-    let translatedText: string;
-
     const myMemoryTranslator = new MyMemoryTranslator({
       source: sourceLang as string,
       target: targetLang as string,
       email: "manfromexistence1@gmail.com",
     });
-    translatedText = await myMemoryTranslator.translate(textToTranslate as string);
+    const translatedText = await myMemoryTranslator.translate(textToTranslate as string);
 
     s.stop('Translation complete!');
-
     outro(`${translatedText}`);
 
   } catch (error) {
@@ -78,68 +64,81 @@ async function runGenerateMode() {
     outro('Operation cancelled.');
     return;
   }
-
+  
   const s = spinner();
-  s.start(`Reading source file: ${filePathInput}`);
-
+  
   try {
+    s.start(`Reading source file: ${filePathInput}`);
     const absolutePath = path.resolve(process.cwd(), filePathInput as string);
     const fileContent = await fs.readFile(absolutePath, 'utf-8');
     const jsonContent = JSON.parse(fileContent);
+    
+    s.stop('File read successfully.');
 
-    s.message('Formatting content for translation...');
+    // Removed the language input prompt. We will now always translate to all languages.
+    const targetLanguages: string[] = Array.from(MYMEMORY_LANGUAGES_TO_CODES.keys());
+    
     const originalKeys = Object.keys(jsonContent);
     const originalValues = Object.values(jsonContent);
     const textToTranslate = originalValues.map(value => `(${value})`).join('');
+    const totalLanguages = targetLanguages.length;
 
-    s.message('Translating to Arabic...');
-    const myMemoryTranslator = new MyMemoryTranslator({
-      source: 'english',
-      target: 'arabic',
-      email: "manfromexistence1@gmail.com", // Optional but recommended
-    });
-    const translatedText = await myMemoryTranslator.translate(textToTranslate);
+    s.start(`Preparing to translate into ${totalLanguages} languages.`);
+    
+    // Iterate over each selected language and perform translation
+    for (let i = 0; i < totalLanguages; i++) {
+        const langName = targetLanguages[i];
+        const langCode = MYMEMORY_LANGUAGES_TO_CODES.get(langName)!;
 
-    s.message('Parsing translated content...');
-    // Regex to find content inside parentheses: (content)
-    const translatedValues = translatedText.match(/\((.*?)\)/g)?.map(v => v.slice(1, -1)) || [];
+        // Update spinner to show current progress
+        s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
 
-    if (originalKeys.length !== translatedValues.length) {
-        throw new Error(`Translation mismatch: Expected ${originalKeys.length} values, but got ${translatedValues.length}.`);
-    }
+        try {
+            const translator = new MyMemoryTranslator({
+                source: 'english',
+                target: langCode,
+                email: 'manfromexistence1@gmail.com', // Using an email is recommended
+            });
 
-    const arabicJsonContent = Object.fromEntries(
-      originalKeys.map((key, index) => [key, translatedValues[index]])
-    );
+            const translatedText = await translator.translate(textToTranslate);
+            
+            // Use regex to extract translated values from the response string
+            const translatedValues = translatedText.match(/\((.*?)\)/g)?.map(v => v.slice(1, -1)) || [];
+            
+            if (originalKeys.length !== translatedValues.length) {
+                console.warn(`\n[Warning] Mismatch for ${langName}. Expected ${originalKeys.length} translations, but got ${translatedValues.length}. Skipping.`);
+                continue; // Skip this language and proceed with the next one
+            }
 
-    s.message('Saving to locales/arabic.json...');
-    const localesDir = path.resolve(process.cwd(), 'locales');
-    const arabicFilePath = path.join(localesDir, 'arabic.json');
+            const newJsonContent = Object.fromEntries(
+                originalKeys.map((key, index) => [key, translatedValues[index]])
+            );
 
-    // Ensure the 'locales' directory exists
-    await fs.mkdir(localesDir, { recursive: true });
+            const localesDir = path.resolve(process.cwd(), 'locales');
+            const targetFilePath = path.join(localesDir, `${langName.replace(/\s/g, '-')}.json`);
+            
+            await fs.mkdir(localesDir, { recursive: true });
 
-    let finalJsonToWrite = arabicJsonContent;
+            let finalJsonToWrite = newJsonContent;
 
-    try {
-        // Check if the file already exists to update it
-        const existingArabicFile = await fs.readFile(arabicFilePath, 'utf-8');
-        const existingArabicJson = JSON.parse(existingArabicFile);
-        s.message('Updating existing arabic.json...');
-        // Merge new translations into the existing file
-        finalJsonToWrite = { ...existingArabicJson, ...arabicJsonContent };
-    } catch (error) {
-        // If file doesn't exist (ENOENT) or is invalid JSON, we'll just create a new one.
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT' && !(error instanceof SyntaxError)) {
-            throw error; // Re-throw other errors
+            // Check if a file for the language already exists to update it
+            try {
+                const existingContent = await fs.readFile(targetFilePath, 'utf-8');
+                const existingJson = JSON.parse(existingContent);
+                finalJsonToWrite = { ...existingJson, ...newJsonContent };
+            } catch (err) {
+                // If the file doesn't exist or is unreadable, a new one will be created.
+            }
+            
+            await fs.writeFile(targetFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
+
+        } catch (langError) {
+            console.error(`\n[Error] Failed to process language "${langName}": ${(langError as Error).message}`);
         }
-        s.message('Creating new arabic.json...');
     }
 
-    await fs.writeFile(arabicFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
-
-    s.stop('Successfully generated and saved locales/arabic.json');
-    outro('File generation complete.');
+    s.stop(`Translation process completed. Processed ${totalLanguages} languages.`);
+    outro('All files have been generated/updated in the /locales directory.');
 
   } catch (error) {
     s.stop('An error occurred.');
@@ -153,11 +152,10 @@ async function runGenerateMode() {
   }
 }
 
-
 async function main() {
   console.clear();
 
-  const title: any = cfonts.say('Dx Translate', {
+  cfonts.say('Dx Translate', {
     font: 'block',
     align: 'left',
     background: 'transparent',
@@ -171,7 +169,7 @@ async function main() {
     env: 'node'
   });
 
-  intro(title);
+  intro('Welcome to the Translation CLI');
 
   const mode = await select({
     message: 'What would you like to do?',
