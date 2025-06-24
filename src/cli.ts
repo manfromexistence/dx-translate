@@ -37,7 +37,7 @@ async function main() {
 
   const textToTranslate = await text({
     message: 'Enter the text you want to translate:',
-    initialValue: 'Hello, Nice to meet you!',
+    initialValue: `A greeting is far more than a simple formality; it is the spark that ignites human connection.`,
     validate: (input) => {
       if (!input) return 'Please enter some text.';
     },
