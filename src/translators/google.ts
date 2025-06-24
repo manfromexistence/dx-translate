@@ -44,7 +44,7 @@ export class GoogleTranslator extends BaseTranslator {
 
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("An Axios error occurred during Google translation:", error.message);
+        // console.error("An Axios error occurred during Google translation:", error.message);
       } else {
         console.error("An unexpected error occurred during Google translation:", error);
       }
