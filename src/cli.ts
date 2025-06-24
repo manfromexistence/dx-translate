@@ -79,9 +79,8 @@ async function main() {
     let translatedText: string;
 
     if (provider === 'Google') {
-      const googleTranslator = new GoogleTranslator(sourceLang as string, targetLang as 'en');
+      const googleTranslator = new GoogleTranslator(sourceLang as string, targetLang as string);
       translatedText = await googleTranslator.translate(textToTranslate as string);
-      await googleTranslator.close();
     } else {
       const myMemoryTranslator = new MyMemoryTranslator({
         source: sourceLang as string,
@@ -96,7 +95,7 @@ async function main() {
 
   } catch (error) {
     s.stop('An error occurred.');
-    console.error(error);
+    console.error((error as Error).message);
   }
 }
 
