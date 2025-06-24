@@ -5,13 +5,13 @@ import { isCancel } from '@clack/prompts';
 
 async function main() {
   console.clear();
-  intro(`Dx-Translator CLI`);
+  intro(`TS-Translator CLI`);
 
   const provider = await select({
     message: 'Which translation provider would you like to use?',
     options: [
-      { value: 'Google', label: 'Google' },
       { value: 'MyMemory', label: 'MyMemory' },
+      { value: 'Google', label: 'Google' },
     ],
   });
   
@@ -22,6 +22,7 @@ async function main() {
 
   const textToTranslate = await text({
     message: 'Enter the text you want to translate:',
+    initialValue: 'Hello, Nice to meet you!',
     validate: (input) => {
       if (!input) return 'Please enter some text.';
     },
@@ -47,42 +48,15 @@ async function main() {
 
   const targetLang = await text({
     message: 'Enter the target language (e.g., "es", "german"):',
-    initialValue: 'bengali',
+    initialValue: 'arabic',
   });
+
 
   if (isCancel(targetLang)) {
     outro('Operation cancelled.');
     return;
   }
   
-  let email: string | undefined = undefined;
-  if (provider === 'MyMemory') {
-      const useEmail = await confirm({
-          message: 'Do you want to provide an email for a higher MyMemory limit?'
-      });
-
-      if (isCancel(useEmail)) {
-        outro('Operation cancelled.');
-        return;
-      }
-
-      if (useEmail) {
-          const emailAddress = await text({
-              message: 'Enter your email address:',
-              validate: (input) => {
-                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                  if (!emailRegex.test(input)) return 'Please enter a valid email address.';
-              }
-          });
-
-        if (isCancel(emailAddress)) {
-            outro('Operation cancelled.');
-            return;
-        }
-        email = emailAddress as string;
-      }
-  }
-
   const s = spinner();
   s.start('Translating...');
 
@@ -94,16 +68,18 @@ async function main() {
       translatedText = await googleTranslator.translate(textToTranslate as string);
       await googleTranslator.close();
     } else {
+      // MyMemory will now always use the specified email for a higher limit
       const myMemoryTranslator = new MyMemoryTranslator({
         source: sourceLang as string,
         target: targetLang as string,
-        email: email,
+        email: "ajju40959@gmail.com",
       });
       translatedText = await myMemoryTranslator.translate(textToTranslate as string);
     }
     s.stop('Translation complete!');
 
-    outro(`Original Text: ${textToTranslate}\nTranslation:    ${translatedText}`);
+    // outro(`Original Text: ${textToTranslate}\nTranslation:    ${translatedText}`);
+    outro(`${translatedText}`);
 
   } catch (error) {
     s.stop('An error occurred.');
