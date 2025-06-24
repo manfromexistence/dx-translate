@@ -6,7 +6,6 @@ import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
 
-// runTryMode remains the same, no changes needed here.
 async function runTryMode(provider: 'Google' | 'MyMemory') {
   const textToTranslate = await text({
     message: 'Enter the text you want to translate:',
@@ -154,7 +153,7 @@ async function runGenerateMode(provider: 'Google' | 'MyMemory') {
         await fs.writeFile(targetFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
 
       } catch (langError) {
-        console.error(`\n[Error] Failed to process language "${langName}": ${(langError as Error).message}`);
+        // console.error(`\n[Error] Failed to process language "${langName}": ${(langError as Error).message}`);
       }
     }
 
