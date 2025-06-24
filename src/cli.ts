@@ -2,9 +2,6 @@ import inquirer from 'inquirer';
 import { GoogleTranslator } from '@/translators/google';
 import { MyMemoryTranslator } from '@/translators/mymemory';
 
-/**
- * Main function to run the CLI application.
- */
 async function main() {
   console.log('Welcome to the TS-Translator CLI!');
 

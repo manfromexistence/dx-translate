@@ -8,6 +8,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "dev": "bun run --watch src/cli.ts",
     "prepublishOnly": "bun run build"
   },
   "keywords": [
