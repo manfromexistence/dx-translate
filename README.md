@@ -1,2 +1,2 @@
-# Dx Translate
+# Dx Translate & TTS
 A flexible and free TypeScript tool to translate between different languages using multiple translators.
