@@ -1,11 +1,12 @@
 import { intro, outro, select, text, spinner, isCancel } from '@/prompts';
 import { MyMemoryTranslator } from '@/translators/mymemory';
+import { GoogleTranslator } from '@/translators/google';
+import { GOOGLE_LANGUAGES_TO_CODES, MYMEMORY_LANGUAGES_TO_CODES } from "@/utils/languages";
 import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
-import { MYMEMORY_LANGUAGES_TO_CODES } from "@/utils/languages";
 
-async function runTryMode() {
+async function runTryMode(provider: 'Google' | 'MyMemory') {
   const textToTranslate = await text({
     message: 'Enter the text you want to translate:',
     initialValue: `(Hello World)`,
@@ -37,12 +38,26 @@ async function runTryMode() {
   s.start('Translating...');
 
   try {
-    const myMemoryTranslator = new MyMemoryTranslator({
-      source: sourceLang as string,
-      target: targetLang as string,
-      email: "manfromexistence1@gmail.com",
-    });
-    const translatedText = await myMemoryTranslator.translate(textToTranslate as string);
+    let translatedText: string;
+
+    if (provider === 'Google') {
+      const sourceCode = GOOGLE_LANGUAGES_TO_CODES.get(sourceLang as string);
+      const targetCode = GOOGLE_LANGUAGES_TO_CODES.get(targetLang as string);
+
+      if (!sourceCode || !targetCode) {
+        throw new Error(`Invalid language name for Google Translate. Supported languages: ${Array.from(GOOGLE_LANGUAGES_TO_CODES.keys()).join(', ')}`);
+      }
+
+      const googleTranslator = new GoogleTranslator(sourceCode, targetCode);
+      translatedText = await googleTranslator.translate(textToTranslate as string);
+    } else {
+      const myMemoryTranslator = new MyMemoryTranslator({
+        source: sourceLang as string,
+        target: targetLang as string,
+        email: "manfromexistence2@gmail.com",
+      });
+      translatedText = await myMemoryTranslator.translate(textToTranslate as string);
+    }
 
     s.stop('Translation complete!');
     outro(`${translatedText}`);
@@ -53,85 +68,92 @@ async function runTryMode() {
   }
 }
 
-async function runGenerateMode() {
+async function runGenerateMode(provider: 'Google' | 'MyMemory') {
   const filePathInput = await text({
     message: 'Enter the path to the source JSON file:',
-    initialValue: './locales/english.json',
+    initialValue: './locales-google/en.json',
   });
 
   if (isCancel(filePathInput)) {
     outro('Operation cancelled.');
     return;
   }
-  
+
   const s = spinner();
-  
+
   try {
     s.start(`Reading source file: ${filePathInput}`);
     const absolutePath = path.resolve(process.cwd(), filePathInput as string);
     const fileContent = await fs.readFile(absolutePath, 'utf-8');
     const jsonContent = JSON.parse(fileContent);
-    
+
     s.stop('File read successfully.');
 
-    // Automatically translate to all languages from the Map.
-    const targetLanguages: string[] = Array.from(MYMEMORY_LANGUAGES_TO_CODES.keys());
-    
+    const languageMap = provider === 'Google' ? GOOGLE_LANGUAGES_TO_CODES : MYMEMORY_LANGUAGES_TO_CODES;
+    const targetLanguages: string[] = Array.from(languageMap.keys());
+
     const originalKeys = Object.keys(jsonContent);
     const originalValues = Object.values(jsonContent);
     const textToTranslate = originalValues.map(value => `(${value})`).join('');
     const totalLanguages = targetLanguages.length;
 
-    s.start(`Preparing to translate into ${totalLanguages} languages.`);
-    
-    for (let i = 0; i < totalLanguages; i++) {
-        const langName = targetLanguages[i];
+    s.start(`Preparing to translate into ${totalLanguages} languages using ${provider}.`);
 
-        s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
+    for (let i = 0; i < totalLanguages; i++) {
+      const langName = targetLanguages[i];
+      if (langName === 'english') continue; // Skip translating to the source language
+
+      s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
+
+      try {
+        let translator;
+
+        if (provider === 'Google') {
+          const sourceCode = GOOGLE_LANGUAGES_TO_CODES.get('english')!;
+          const targetCode = GOOGLE_LANGUAGES_TO_CODES.get(langName)!;
+          translator = new GoogleTranslator(sourceCode, targetCode);
+        } else { // MyMemory
+          translator = new MyMemoryTranslator({
+            source: 'english',
+            target: langName,
+            email: 'manfromexistence1@gmail.com',
+          });
+        }
+
+        const translatedText = await translator.translate(textToTranslate);
+
+        const translatedValues = translatedText.match(/\((.*?)\)/g)?.map(v => v.slice(1, -1)) || [];
+
+        if (originalKeys.length !== translatedValues.length) {
+          console.warn(`\n[Warning] Mismatch for ${langName}. Expected ${originalKeys.length} translations, but got ${translatedValues.length}. Skipping.`);
+          continue;
+        }
+
+        const newJsonContent = Object.fromEntries(
+          originalKeys.map((key, index) => [key, translatedValues[index]])
+        );
+
+        const langCode = languageMap.get(langName)!;
+        const localesDir = path.resolve(process.cwd(), 'locales');
+        const targetFilePath = path.join(localesDir, `${langCode}.json`);
+
+        await fs.mkdir(localesDir, { recursive: true });
+
+        let finalJsonToWrite = newJsonContent;
 
         try {
-            // CORRECTED: Use the full language name (e.g., "spanish") for the target.
-            const translator = new MyMemoryTranslator({
-                source: 'english',
-                target: langName, 
-                email: 'manfromexistence1@gmail.com',
-            });
-
-            const translatedText = await translator.translate(textToTranslate);
-            
-            const translatedValues = translatedText.match(/\((.*?)\)/g)?.map(v => v.slice(1, -1)) || [];
-            
-            if (originalKeys.length !== translatedValues.length) {
-                console.warn(`\n[Warning] Mismatch for ${langName}. Expected ${originalKeys.length} translations, but got ${translatedValues.length}. Skipping.`);
-                continue;
-            }
-
-            const newJsonContent = Object.fromEntries(
-                originalKeys.map((key, index) => [key, translatedValues[index]])
-            );
-
-            // Use the language code (e.g., "es-ES") for the filename for consistency.
-            const langCode = MYMEMORY_LANGUAGES_TO_CODES.get(langName)!;
-            const localesDir = path.resolve(process.cwd(), 'locales');
-            const targetFilePath = path.join(localesDir, `${langCode}.json`);
-            
-            await fs.mkdir(localesDir, { recursive: true });
-
-            let finalJsonToWrite = newJsonContent;
-
-            try {
-                const existingContent = await fs.readFile(targetFilePath, 'utf-8');
-                const existingJson = JSON.parse(existingContent);
-                finalJsonToWrite = { ...existingJson, ...newJsonContent };
-            } catch (err) {
-                // If the file doesn't exist, a new one will be created.
-            }
-            
-            await fs.writeFile(targetFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
-
-        } catch (langError) {
-            console.error(`\n[Error] Failed to process language "${langName}": ${(langError as Error).message}`);
+          const existingContent = await fs.readFile(targetFilePath, 'utf-8');
+          const existingJson = JSON.parse(existingContent);
+          finalJsonToWrite = { ...existingJson, ...newJsonContent };
+        } catch (err) {
+          // If the file doesn't exist, a new one will be created.
         }
+
+        await fs.writeFile(targetFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
+
+      } catch (langError) {
+        console.error(`\n[Error] Failed to process language "${langName}": ${(langError as Error).message}`);
+      }
     }
 
     s.stop(`Translation process completed. Processed ${totalLanguages} languages.`);
@@ -168,6 +190,19 @@ async function main() {
 
   intro('Welcome to the Translation CLI');
 
+  const provider = await select({
+    message: 'Select a translation provider:',
+    options: [
+      { value: 'Google', label: 'Google Translate' },
+      { value: 'MyMemory', label: 'MyMemory' },
+    ],
+  });
+
+  if (isCancel(provider)) {
+    outro('Operation cancelled.');
+    return;
+  }
+
   const mode = await select({
     message: 'What would you like to do?',
     options: [
@@ -182,9 +217,9 @@ async function main() {
   }
 
   if (mode === 'Generate') {
-    await runGenerateMode();
+    await runGenerateMode(provider as 'Google' | 'MyMemory');
   } else if (mode === 'Try') {
-    await runTryMode();
+    await runTryMode(provider as 'Google' | 'MyMemory');
   }
 }
 
