@@ -1,4 +1,4 @@
-import { intro, outro, select, text, spinner, isCancel } from '@clack/prompts';
+import { intro, outro, select, text, spinner, isCancel } from '@/prompts';
 import { MyMemoryTranslator } from '@/translators/mymemory';
 import { GoogleTranslator } from '@/translators/google';
 import cfonts from "cfonts";
