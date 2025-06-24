@@ -1,0 +1,23 @@
+{
+  "title": "Ultracite",
+  "pages": [
+    "---Overview---",
+    "introduction",
+    "examples",
+    "faq",
+    "---Usage---",
+    "setup",
+    "usage",
+    "configuration",
+    "troubleshooting",
+    "---Integrations---",
+    "husky",
+    "lint-staged",
+    "---AI---",
+    "rules",
+    "mcp",
+    "---Contributing---",
+    "goals",
+    "contributing"
+  ]
+}
