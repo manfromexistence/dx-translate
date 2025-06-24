@@ -6,15 +6,17 @@ import cfonts from "cfonts";
 import fs from 'fs/promises';
 import path from 'path';
 
+// MODIFICATION: This function now performs a single translation and returns.
 async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
   const textToTranslate = await text({
-    message: 'Enter the text you want to translate:',
+    message: 'Enter the text to translate (or press ESC to cancel):',
     initialValue: `Hello World!`,
     validate: (input) => {
       if (!input) return 'Please enter some text.';
     },
   });
 
+  // If the user cancels, return to the main menu.
   if (isCancel(textToTranslate)) {
     outro('Operation cancelled.');
     return;
@@ -29,6 +31,7 @@ async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
   });
 
 
+  // If the user cancels, return to the main menu.
   if (isCancel(targetLang)) {
     outro('Operation cancelled.');
     return;
@@ -45,7 +48,9 @@ async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
       const targetCode = GOOGLE_LANGUAGES_TO_CODES.get(targetLang as string);
 
       if (!sourceCode || !targetCode) {
-        throw new Error(`Invalid language name for Google Translate. Supported languages: ${Array.from(GOOGLE_LANGUAGES_TO_CODES.keys()).join(', ')}`);
+        s.stop('Translation Failed.', 1);
+        console.error(`\nInvalid language name for Google Translate. Supported languages: ${Array.from(GOOGLE_LANGUAGES_TO_CODES.keys()).join(', ')}`);
+        return; // Return to the main menu if the language is invalid.
       }
 
       const googleTranslator = new GoogleTranslator(sourceCode, targetCode);
@@ -53,7 +58,7 @@ async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
 
       s.stop('Translation complete!');
       outro(`${translatedText}`);
-    } 
+    }
     /*
     // MyMemory provider logic is commented out
     else {
@@ -72,168 +77,170 @@ async function runTryMode(provider: 'Google' /*| 'MyMemory'*/) {
   }
 }
 
-// FIX APPLIED IN THIS FUNCTION
+// NO CHANGES IN THIS FUNCTION
 async function runGenerateMode(provider: 'Google' /*| 'MyMemory'*/) {
-  const filePathInput = await text({
-    message: 'Enter the path to the source JSON file:',
-    initialValue: './locales-google/en.json',
-  });
+  const filePathInput = await text({
+    message: 'Enter the path to the source JSON file:',
+    initialValue: './locales-google/en.json',
+  });
 
-  if (isCancel(filePathInput)) {
-    outro('Operation cancelled.');
-    return;
-  }
+  if (isCancel(filePathInput)) {
+    outro('Operation cancelled.');
+    return;
+  }
 
-  const s = spinner();
+  const s = spinner();
 
-  try {
-    s.start(`Reading source file: ${filePathInput}`);
-    const absolutePath = path.resolve(process.cwd(), filePathInput as string);
-    const fileContent = await fs.readFile(absolutePath, 'utf-8');
-    const jsonContent = JSON.parse(fileContent);
+  try {
+    s.start(`Reading source file: ${filePathInput}`);
+    const absolutePath = path.resolve(process.cwd(), filePathInput as string);
+    const fileContent = await fs.readFile(absolutePath, 'utf-8');
+    const jsonContent = JSON.parse(fileContent);
 
-    s.stop('File read successfully.');
+    s.stop('File read successfully.');
 
-    // Defaulting to Google's language map as MyMemory is commented out
-    const languageMap = GOOGLE_LANGUAGES_TO_CODES;
-    const targetLanguages: string[] = Array.from(languageMap.keys());
+    // Defaulting to Google's language map as MyMemory is commented out
+    const languageMap = GOOGLE_LANGUAGES_TO_CODES;
+    const targetLanguages: string[] = Array.from(languageMap.keys());
 
-    const originalKeys = Object.keys(jsonContent);
-    const originalValues = Object.values(jsonContent);
-    const totalLanguages = targetLanguages.length;
+    const originalKeys = Object.keys(jsonContent);
+    const originalValues = Object.values(jsonContent);
+    const totalLanguages = targetLanguages.length;
 
-    s.start(`Preparing to translate into ${totalLanguages} languages using ${provider}.`);
+    s.start(`Preparing to translate into ${totalLanguages} languages using ${provider}.`);
 
-    for (let i = 0; i < totalLanguages; i++) {
-      const langName = targetLanguages[i];
-      if (langName === 'english') continue; // Skip translating to the source language
+    for (let i = 0; i < totalLanguages; i++) {
+      const langName = targetLanguages[i];
+      if (langName === 'english') continue; // Skip translating to the source language
 
-      s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
+      s.message(`Translating to ${langName} (${i + 1} of ${totalLanguages})...`);
 
-      try {
-        let translator:any;
+      try {
+        let translator:any;
 
-        if (provider === 'Google') {
-          const sourceCode = GOOGLE_LANGUAGES_TO_CODES.get('english')!;
-          const targetCode = GOOGLE_LANGUAGES_TO_CODES.get(langName)!;
-          translator = new GoogleTranslator(sourceCode, targetCode);
-        } 
-        /* // MyMemory provider logic is commented out
-        else { // MyMemory
-          translator = new MyMemoryTranslator({
-            source: 'english',
-            target: langName,
-            email: 'manfromexistence1@gmail.com',
-          });
-        }
-        */
+        if (provider === 'Google') {
+          const sourceCode = GOOGLE_LANGUAGES_TO_CODES.get('english')!;
+          const targetCode = GOOGLE_LANGUAGES_TO_CODES.get(langName)!;
+          translator = new GoogleTranslator(sourceCode, targetCode);
+        } 
+        /* // MyMemory provider logic is commented out
+        else { // MyMemory
+          translator = new MyMemoryTranslator({
+            source: 'english',
+            target: langName,
+            email: 'manfromexistence1@gmail.com',
+          });
+        }
+        */
 
-        // Create an array of translation promises, one for each value
-        const translationPromises = originalValues.map(value =>
-          translator.translate(String(value))
-        );
+        // Create an array of translation promises, one for each value
+        const translationPromises = originalValues.map(value =>
+          translator.translate(String(value))
+        );
 
-        // Await all promises to resolve concurrently
-        const translatedValues = await Promise.all(translationPromises);
+        // Await all promises to resolve concurrently
+        const translatedValues = await Promise.all(translationPromises);
 
-        // The mismatch check is no longer needed because Promise.all guarantees order and length.
+        // The mismatch check is no longer needed because Promise.all guarantees order and length.
 
-        const newJsonContent = Object.fromEntries(
-          originalKeys.map((key, index) => [key, translatedValues[index]])
-        );
+        const newJsonContent = Object.fromEntries(
+          originalKeys.map((key, index) => [key, translatedValues[index]])
+        );
 
-        const langCode = languageMap.get(langName)!;
-        const localesDir = path.resolve(process.cwd(), 'locales-google');
-        const targetFilePath = path.join(localesDir, `${langCode}.json`);
+        const langCode = languageMap.get(langName)!;
+        const localesDir = path.resolve(process.cwd(), 'locales-google');
+        const targetFilePath = path.join(localesDir, `${langCode}.json`);
 
-        await fs.mkdir(localesDir, { recursive: true });
+        await fs.mkdir(localesDir, { recursive: true });
 
-        let finalJsonToWrite = newJsonContent;
+        let finalJsonToWrite = newJsonContent;
 
-        try {
-          const existingContent = await fs.readFile(targetFilePath, 'utf-8');
-          const existingJson = JSON.parse(existingContent);
-          finalJsonToWrite = { ...existingJson, ...newJsonContent };
-        } catch (err) {
-          // If the file doesn't exist, a new one will be created.
-        }
+        try {
+          const existingContent = await fs.readFile(targetFilePath, 'utf-8');
+          const existingJson = JSON.parse(existingContent);
+          finalJsonToWrite = { ...existingJson, ...newJsonContent };
+        } catch (err) {
+          // If the file doesn't exist, a new one will be created.
+        }
 
-        await fs.writeFile(targetFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
+        await fs.writeFile(targetFilePath, JSON.stringify(finalJsonToWrite, null, 2), 'utf-8');
 
-      } catch (langError) {
-        // console.error(`\n[Error] Failed to process language "${langName}": ${(langError as Error).message}`);
-      }
-    }
+      } catch (langError) {
+        // console.error(`\n[Error] Failed to process language "${langName}": ${(langError as Error).message}`);
+      }
+    }
 
-    s.stop(`Translation process completed. Processed ${totalLanguages} languages.`);
-    outro('All files have been generated/updated in the /locales directory.');
+    s.stop(`Translation process completed. Processed ${totalLanguages} languages.`);
+    outro('All files have been generated/updated in the /locales directory.');
 
-  } catch (error) {
-    s.stop('An error occurred.');
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.error('Error: File not found at the specified path.');
-    } else if (error instanceof SyntaxError) {
-      console.error('Error: Failed to parse JSON. Please check the file format.');
-    } else {
-      console.error((error as Error).message);
-    }
-  }
+  } catch (error) {
+    s.stop('An error occurred.');
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      console.error('Error: File not found at the specified path.');
+    } else if (error instanceof SyntaxError) {
+      console.error('Error: Failed to parse JSON. Please check the file format.');
+    } else {
+      console.error((error as Error).message);
+    }
+  }
 }
 
-// main function remains the same, no changes needed here.
+// MODIFICATION: The main function now loops the mode selection.
 async function main() {
-  console.clear();
+  console.clear();
 
-  cfonts.say('Dx Translate', {
-    font: 'block',
-    align: 'left',
-    background: 'transparent',
-    letterSpacing: 1,
-    lineHeight: 1,
-    space: true,
-    maxLength: '0',
-    gradient: ['cyan', 'blue'],
-    independentGradient: true,
-    transitionGradient: false,
-    env: 'node'
-  });
+  cfonts.say('Dx Translate', {
+    font: 'block',
+    align: 'left',
+    background: 'transparent',
+    letterSpacing: 1,
+    lineHeight: 1,
+    space: true,
+    maxLength: '0',
+    gradient: ['cyan', 'blue'],
+    independentGradient: true,
+    transitionGradient: false,
+    env: 'node'
+  });
 
-  intro('Welcome to the Translation CLI');
-  
-  // Provider is now defaulted to Google. The selection prompt is commented out.
-  const provider = 'Google';
-  /*
-  const provider = await select({
-    message: 'Select a translation provider:',
-    options: [
-      { value: 'Google', label: 'Google Translate' },
-      { value: 'MyMemory', label: 'MyMemory' },
-    ],
-  });
+  intro('Welcome to the Translation CLI');
+  
+  while (true) {
+    // Provider is now defaulted to Google. The selection prompt is commented out.
+    const provider = 'Google';
+    /*
+    const provider = await select({
+      message: 'Select a translation provider:',
+      options: [
+        { value: 'Google', label: 'Google Translate' },
+        { value: 'MyMemory', label: 'MyMemory' },
+      ],
+    });
 
-  if (isCancel(provider)) {
-    outro('Operation cancelled.');
-    return;
-  }
-  */
+    if (isCancel(provider)) {
+      outro('Operation cancelled.');
+      return;
+    }
+    */
 
-  const mode = await select({
-    message: 'What would you like to do?',
-    options: [
-      { value: 'Generate', label: 'Generate from a file' },
-      { value: 'Try', label: 'Try a single translation' },
-    ],
-  });
+    const mode = await select({
+      message: 'What would you like to do? (Press ESC to exit)',
+      options: [
+        { value: 'Generate', label: 'Generate from a file' },
+        { value: 'Try', label: 'Try a single translation' },
+      ],
+    });
 
-  if (isCancel(mode)) {
-    outro('Operation cancelled.');
-    return;
-  }
+    if (isCancel(mode)) {
+      outro('Goodbye!');
+      break;
+    }
 
-  if (mode === 'Generate') {
-    await runGenerateMode(provider as 'Google' /*| 'MyMemory'*/);
-  } else if (mode === 'Try') {
-    await runTryMode(provider as 'Google' /*| 'MyMemory'*/);
+    if (mode === 'Generate') {
+      await runGenerateMode(provider as 'Google' /*| 'MyMemory'*/);
+    } else if (mode === 'Try') {
+      await runTryMode(provider as 'Google' /*| 'MyMemory'*/);
+    }
   }
 }
 
