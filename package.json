@@ -8,7 +8,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
-    "dev": "bun run --watch src/cli.ts",
+    "dev-translate": "bun run --watch src/dx-translate-cli.ts",
+    "dev-tts": "bun run --watch src/dx-tts-cli.ts",
     "prepublishOnly": "bun run build"
   },
   "keywords": [
