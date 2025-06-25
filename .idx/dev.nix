@@ -18,7 +18,7 @@
     workspace = {
       # Runs when a workspace is first created with this `dev.nix` file
       onCreate = {
-        npm-install = "bun install && bun dev";
+        npm-install = "bun install && bun tts";
       };
       # To run something each time the workspace is (re)started, use the `onStart` hook
     };
